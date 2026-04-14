@@ -44,9 +44,10 @@ function hookGameEvents() {
             duration: lerpData.duration
         };
 
-        // Save every ball result immediately so final summary is accurate.
+        // 🔥 COLLECT DATA SILENTLY - NO PER-BALL POPUPS
+        // All analysis (LERP + Motor) will be shown ONLY in the final summary
         window.dataManager.addBallData(ballData);
-        new CalculationPopup(ballData);
+        // ❌ REMOVED: new CalculationPopup(ballData);
     });
 
     // Listen for game end event from controller
@@ -57,20 +58,16 @@ function hookGameEvents() {
         data.ballsPlayed = details.ballsPlayed;
         data.lerpResults = details.lerpResults;
         data.lerpSummary = details.lerpSummary;
+        // 🔥 ATTACH MOTOR ANALYSIS SUMMARY
+        data.motorAnalysisSummary = window.motorDetector?.formatPerBallResultsForDisplay() || '';
+        data.motorAnalysisStats = window.motorDetector?.getSummaryStatistics() || {};
 
         new FinalPopup(data, () => {
             // Reset for new game
             window.dataManager.resetBalls();
+            window.motorDetector?.reset();
             window.mysteryBoxShown = false;
         });
-    });
-
-    // Hook into click events for motor movement
-    document.addEventListener('click', (e) => {
-        if (window.gamePaused) return;
-        if (e.target.id === 'app' || e.target.tagName === 'CANVAS') {
-            window.motorDetector.detectMovement('click');
-        }
     });
 
     // Mystery box trigger (randomly once per game)

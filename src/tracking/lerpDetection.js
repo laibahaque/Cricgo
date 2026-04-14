@@ -1,7 +1,10 @@
 class LerpDetector {
-    constructor() {
+    constructor(ticker, onLerpComplete = null) {
+        this.ticker = ticker;
+        this.onLerpComplete = onLerpComplete; // 🔥 CALLBACK FOR PER-BALL COMPLETION
         this.current = null;
         this.results = [];
+        this.startTime = null; // 🔥 TRACK LERP DURATION
     }
 
     lerp(A, B, t) {
@@ -16,6 +19,8 @@ class LerpDetector {
             lerpStartX: startX,  // A
             lerpTargetX: targetX  // B
         };
+        
+        this.startTime = performance.now(); // 🔥 TRACK START TIME
     }
 
     endBatsmanLerp(ballNumber, endX) {
@@ -23,6 +28,9 @@ class LerpDetector {
 
         const A = this.current.lerpStartX;
         const B = endX;  // Final position reached
+        
+        // 🔥 CALCULATE LERP DURATION
+        const lerpDuration = this.startTime ? performance.now() - this.startTime : 0;
 
         // Calculate TRUE LERP value at t=0.5 (midpoint)
         const lerpMidpoint = this.lerp(A, B, 0.5);
@@ -33,6 +41,7 @@ class LerpDetector {
             endX: B,
             distance: Math.abs(B - A),
             lerpResult: lerpMidpoint,  // Value at t=0.5
+            duration: lerpDuration, // 🔥 ADD DURATION
 
             // Full curve for reference
             lerp: {
@@ -49,10 +58,17 @@ class LerpDetector {
         console.log(`🏏 Ball ${ballNumber}:`, {
             startX: A.toFixed(3),
             endX: B.toFixed(3),
-            lerpResult: lerpMidpoint.toFixed(3)
+            lerpResult: lerpMidpoint.toFixed(3),
+            duration: lerpDuration.toFixed(0)
         });
+        
+        // 🔥 TRIGGER CALLBACK IF PROVIDED
+        if (this.onLerpComplete) {
+            this.onLerpComplete(data);
+        }
 
         this.current = null;
+        this.startTime = null;
     }
 
     getResults() {

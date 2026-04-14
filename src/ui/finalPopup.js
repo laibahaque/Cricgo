@@ -53,9 +53,12 @@ class FinalPopup {
         const totalBallsPlayed = this.data.ballsPlayed || 0;
         const finalScore = this.data.finalScore || 0;
         const lerpSummary = this.data.lerpSummary || '';
+        const motorAnalysisSummary = this.data.motorAnalysisSummary || '';
+        const motorAnalysisStats = this.data.motorAnalysisStats || {};
         
         console.log("FinalPopup data:", this.data);
         console.log("LERP Summary:", lerpSummary);
+        console.log("Motor Analysis Summary:", motorAnalysisSummary);
 
         let lerpContent = '';
         if (lerpSummary && lerpSummary.trim() !== '') {
@@ -72,11 +75,43 @@ ${lerpSummary}
             `;
         }
 
+        // 🔥 MOTOR ANALYSIS DISPLAY
+        let motorContent = '';
+        if (motorAnalysisSummary && motorAnalysisSummary.trim() !== '') {
+            motorContent = `
+                <hr style="border: 1px solid #ddd; margin: 15px 0;">
+                <h4>Motor Analysis Per Ball (Fitts' Law):</h4>
+                <pre style="background: #f0f9ff; padding: 12px; border-radius: 5px; text-align: left; font-size: 13px; overflow-x: auto; border-left: 4px solid #2196F3;">
+${motorAnalysisSummary}
+                </pre>
+            `;
+        } else {
+            motorContent = `
+                <hr style="border: 1px solid #ddd; margin: 15px 0;">
+                <h4>Motor Analysis Per Ball:</h4>
+                <p style="color: #999; font-style: italic;">No motor analysis data available</p>
+            `;
+        }
+
+        // 🔥 SUMMARY STATISTICS
+        let motorStatsContent = '';
+        if (motorAnalysisStats.ballsAnalyzed > 0) {
+            motorStatsContent = `
+                <h4>Motor Analysis Summary:</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li><strong>Average Index of Difficulty:</strong> ${motorAnalysisStats.avgID}</li>
+                    <li><strong>Average Movement Time:</strong> ${motorAnalysisStats.avgMovementTime} ms</li>
+                    <li><strong>Average Throughput:</strong> ${motorAnalysisStats.avgThroughput} bits/ms</li>
+            `;
+        }
+
         content.innerHTML = `
             <p><strong>Balls Played:</strong> ${totalBallsPlayed}</p>
             <p><strong>Final Score:</strong> ${finalScore} runs</p>
             <hr style="border: 1px solid #ddd; margin: 15px 0;">
             ${lerpContent}
+            ${motorContent}
+            ${motorStatsContent}
         `;
 
         const closeButton = document.createElement('button');

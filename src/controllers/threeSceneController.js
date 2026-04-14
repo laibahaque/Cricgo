@@ -35,7 +35,12 @@ let gameState = {
     bowlStartTime: 0,
     ballsPlayed: 0,
     gameEnded: false,
-    isPaused: false
+    isPaused: false,
+    // 🔥 MOTOR ANALYSIS PER BALL
+    currentBallAttempt: 0,        // 🔥 Track each click/attempt (incremented on EACH click)
+    clickTime: null,
+    reactionCaptured: false,
+    currentReactionTime: 0
 };
 
 export function createThreeScene(canvas) {
@@ -107,8 +112,12 @@ export function createThreeScene(canvas) {
         null,
         null,
         (movementType) => {
-            if (window.motorDetector) {
-                window.motorDetector.detectMovement(movementType);
+            if (window.motorDetector && characters.batsman?.model) {
+                window.motorDetector.detectMovement(
+                    movementType,
+                    characters.batsman.model.position.clone(),
+                    { ballNumber: gameState.currentBallAttempt }  // 🔥 Use attempt counter, not ballsPlayed
+                );
             }
         }
     );
@@ -157,6 +166,9 @@ export function createThreeScene(canvas) {
         gameState.ballLaunched = true;
         gameState.bailFalling = false;
         gameState.batHitTriggered = false;
+        // 🔥 RESET MOTOR ANALYSIS STATE
+        gameState.reactionCaptured = false;
+        gameState.currentReactionTime = 0;
 
         if (characters.batsman?.model?.userData) {
             characters.batsman.model.userData.wasMoving = false;
@@ -173,6 +185,9 @@ export function createThreeScene(canvas) {
         gameState.elapsedTime = 0;
         gameState.ballLaunched = true;
         gameState.batHitTriggered = false;
+        // 🔥 RESET MOTOR ANALYSIS STATE
+        gameState.reactionCaptured = false;
+        gameState.currentReactionTime = 0;
 
         // Reset state tracking for new ball
         if (characters.batsman?.model?.userData) {
@@ -191,6 +206,30 @@ export function createThreeScene(canvas) {
         if (!isGameStarted()) return;
         if (!characters.bowler?.throwAction || characters.bowler.throwAction.isRunning()) return;
 
+        // 🔥 CAPTURE CLICK TIME FOR REACTION TIME CALCULATION
+        gameState.clickTime = performance.now();
+        gameState.reactionCaptured = false;
+        
+        // 🔥 INCREMENT BALL ATTEMPT COUNTER (each click = new attempt)
+        gameState.currentBallAttempt += 1;
+        const ballNumber = gameState.currentBallAttempt;  // 🔥 Use attempt counter, not ballsPlayed
+        
+        console.log(`\n🔴 CLICK EVENT - Ball Attempt #${ballNumber}`);
+        
+        // 🔥 NOTIFY MOTOR DETECTOR WITH EXACT CLICK TIME
+        if (window.motorDetector && characters.batsman?.model) {
+            window.motorDetector.initializeBallMotorData(ballNumber);
+            window.motorDetector.startPosition = null;  // 🔥 Reset for new ball
+            window.motorDetector.detectMovement('click', characters.batsman.model.position.clone(), {
+                ballNumber: ballNumber,
+                clickTime: gameState.clickTime  // 🔥 Pass the EXACT clickTime captured above
+            });
+        }
+        
+        // ✅ DEBUG
+        console.log("🟢 CLICK TIME:", gameState.clickTime);
+        console.log("🟡 CURRENT BALL ATTEMPT:", gameState.currentBallAttempt);
+        console.log("🟡 REACTION TIME:", gameState.currentReactionTime);
         resetBails(bails);
         resetBallPosition(ball, trajectory.ballStart);
         gameState.t = 0;
@@ -233,8 +272,42 @@ export function createThreeScene(canvas) {
         window.currentBall = gameState.ballsPlayed;
 
         // Motor movement detection
-        if (window.motorDetector) {
-            window.motorDetector.detectMovement('bowler_animation');
+        if (window.motorDetector && characters.batsman?.model) {
+            // 🔥 CAPTURE FINAL POSITION FOR MISSED BALL (if applicable)
+            // Use currentBallAttempt since that's what we track clicks with
+            if (gameState.currentBallAttempt > 0) {
+                const prevBallData = window.motorDetector.ballMotorData[gameState.currentBallAttempt];
+                if (prevBallData && !prevBallData.endPosition && characters.batsman?.model) {
+                    const currentTimestamp = performance.now();  // 🔥 Use performance.now() for consistency
+                    prevBallData.endPosition = {
+                        x: characters.batsman.model.position.x
+                    };
+                    prevBallData.distance = Math.abs(
+                        prevBallData.endPosition.x - prevBallData.startPosition.x
+                    );
+                    // 🔥 FOR MISSED BALL: Calculate MT from click to end of attempt (next ball start)
+                    const ballTiming = window.motorDetector.ballTimings[gameState.currentBallAttempt];
+                    if (ballTiming && ballTiming.clickTime && !ballTiming.hitTime) {
+                        const movementTime = Math.round(currentTimestamp - ballTiming.clickTime);
+                        prevBallData.movementTime = movementTime;
+                        ballTiming.movementTime = movementTime;
+                        // Recalculate throughput for missed ball
+                        const W = prevBallData.width;
+                        const distance = prevBallData.distance;
+                        const ID = Math.log2((distance / W) + 1);
+                        prevBallData.indexOfDifficulty = Number(ID.toFixed(3));
+                        prevBallData.throughput = (movementTime > 0 && ID > 0)
+                            ? Number((ID / movementTime).toFixed(4))
+                            : 0;
+                        console.log(`✅ MISSED BALL (Attempt ${gameState.currentBallAttempt}): MT=${movementTime}ms, TP=${prevBallData.throughput}`);
+                    }
+                }
+            }
+
+            // 🔥 PASS BALL START POSITION
+            window.motorDetector.detectMovement('bowler_animation', trajectory.ballStart.clone(), {
+                ballNumber: gameState.currentBallAttempt  // 🔥 Use currentBallAttempt
+            });
         }
     });
 
@@ -297,40 +370,47 @@ export function createThreeScene(canvas) {
             !gameState.batHitTriggered &&
             gameState.elapsedTime <= gameState.travelTime
         ) {
-    gameState.elapsedTime += delta;
-    gameState.t = gameState.elapsedTime / gameState.travelTime;
+            gameState.elapsedTime += delta;
+            gameState.t = gameState.elapsedTime / gameState.travelTime;
 
-    const { ballPosition } = calculateBallTrajectory(
-        delta,
-        gameState.t,
-        trajectory,
-        gameState.ballSpeed
-    );
+            const { ballPosition } = calculateBallTrajectory(
+                delta,
+                gameState.t,
+                trajectory,
+                gameState.ballSpeed
+            );
 
-    ball.position.copy(ballPosition);
+            ball.position.copy(ballPosition);
 
-    // Batsman tracking and LERP movement
-    if (characters.batsman?.model && gameState.ballLaunched && !gameState.batHitTriggered) {
-        updateBatsmanPosition(
-            characters.batsman.model,
-            ball.position,
-            -1.2, 1.2,
-            BATSMAN_SPEED,
-            delta
-        );
-    }
+            // 🔥 BALL REACH DETECTION - Calculate Reaction Time
+            const TARGET_Z = -5.2;
+            if (gameState.ballLaunched && !gameState.reactionCaptured && ball.position.z <= TARGET_Z) {
+                const reachTime = performance.now();
+                gameState.currentReactionTime = reachTime - gameState.clickTime;
+                gameState.reactionCaptured = true;
+                console.log(`✅ REACTION TIME: ${Math.round(gameState.currentReactionTime)} ms`);
+            }
+            if (characters.batsman?.model && gameState.ballLaunched && !gameState.batHitTriggered) {
+                updateBatsmanPosition(
+                    characters.batsman.model,
+                    ball.position,
+                    -1.2, 1.2,
+                    BATSMAN_SPEED,
+                    delta
+                );
+            }
 
-    // Wicket collision
-    if (!gameState.batHitTriggered) {
-        if (checkBallWicketCollision(ball, wickets.boxes, wickets.meshes)) {
-            gameState.bailFalling = true;
-            gameState.stopGame = true;
-            gameState.t = 1.05;
-            ball.userData.velocity = null;
-            handleWicketHit();
-            triggerGameEnd();
-        }
-    }
+            // Wicket collision
+            if (!gameState.batHitTriggered) {
+                if (checkBallWicketCollision(ball, wickets.boxes, wickets.meshes)) {
+                    gameState.bailFalling = true;
+                    gameState.stopGame = true;
+                    gameState.t = 1.05;
+                    ball.userData.velocity = null;
+                    handleWicketHit();
+                    triggerGameEnd();
+                }
+            }
         }
 
         // Safety: Ensure LERP completes if ball travel ends
@@ -360,9 +440,14 @@ export function createThreeScene(canvas) {
                 ball.userData.hasTouchedGround = false;
                 ball.userData.fourAwarded = false;
 
-                // Motor movement detection
+                // Motor movement detection with per-ball motor data context
                 if (window.motorDetector) {
-                    window.motorDetector.detectMovement('batsman_hit');
+                    // 🔥 PASS CURRENT BALL ATTEMPT (not ballsPlayed)
+                    window.motorDetector.detectMovement('batsman_hit', ball.position.clone(), {
+                        ballNumber: gameState.currentBallAttempt,  // 🔥 Use currentBallAttempt
+                        reactionTime: gameState.currentReactionTime,
+                        lerpData: window.lerpDetector ? window.lerpDetector.current : null
+                    });
                 }
 
                 startBatSwing(bat);
@@ -438,5 +523,5 @@ export function createThreeScene(canvas) {
         renderer.render(scene, camera);
     }
 
-animate();
+    animate();
 }
