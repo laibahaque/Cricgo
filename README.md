@@ -4,7 +4,7 @@
 
 This project is a **Semester Lab Assignment (HCI / Computer Graphics)** in which I tried to implement a **3D Cricket Game** using **HTML, CSS, JavaScript, and Three.js**.
 
-*👉 Note: The 3D character models (batsman, bowler, etc.) used in this project are taken from Sketchfab and animated rigged models are imported from Mixamo for better realism and visual quality.
+👉 Note: The 3D character models (batsman, bowler, etc.) used in this project are taken from Sketchfab and animated rigged models are imported from Mixamo for better realism and visual quality.
 
 The main idea was to simulate a basic cricket environment where a **bowler delivers the ball** and the **batsman responds to hit it**. Along with gameplay, I also attempted to integrate **human performance analysis using Fitts’s Law** in a simplified way.
 
