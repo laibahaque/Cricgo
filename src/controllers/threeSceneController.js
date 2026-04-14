@@ -126,11 +126,16 @@ export function createThreeScene(canvas) {
         gameState.stopGame = true;
         gameState.ballLaunched = false;
 
-        // Dispatch event to trigger final popup
+        // Collect LERP results for final summary
+        const lerpResults = window.lerpDetector ? window.lerpDetector.getResults() : [];
+
+        // Dispatch event to trigger final popup with LERP data
         window.dispatchEvent(new CustomEvent('game-end', {
             detail: {
                 ballsPlayed: gameState.ballsPlayed,
-                finalScore: gameState.score
+                finalScore: gameState.score,
+                lerpResults: lerpResults,
+                lerpSummary: window.lerpDetector ? window.lerpDetector.formatResultsForDisplay() : ''
             }
         }));
     }
@@ -153,6 +158,12 @@ export function createThreeScene(canvas) {
         gameState.bailFalling = false;
         gameState.batHitTriggered = false;
 
+        if (characters.batsman?.model?.userData) {
+            characters.batsman.model.userData.wasMoving = false;
+            characters.batsman.model.userData.lerpT = 0;
+            characters.batsman.model.userData.hasCompletedMove = false;
+        }
+
         resetBails(bails);
         resetBallPosition(ball, trajectory.ballStart);
     });
@@ -163,10 +174,11 @@ export function createThreeScene(canvas) {
         gameState.ballLaunched = true;
         gameState.batHitTriggered = false;
 
-        // Reset LERP tracking flags for new ball
+        // Reset state tracking for new ball
         if (characters.batsman?.model?.userData) {
-            characters.batsman.model.userData.lerpActive = false;
-            characters.batsman.model.userData.lerpCompleted = false;
+            characters.batsman.model.userData.wasMoving = false;
+            characters.batsman.model.userData.lerpT = 0;
+            characters.batsman.model.userData.hasCompletedMove = false;
         }
 
         resetBails(bails);
@@ -297,7 +309,7 @@ export function createThreeScene(canvas) {
 
     ball.position.copy(ballPosition);
 
-    // Batsman tracking
+    // Batsman tracking and LERP movement
     if (characters.batsman?.model && gameState.ballLaunched && !gameState.batHitTriggered) {
         updateBatsmanPosition(
             characters.batsman.model,
@@ -321,16 +333,21 @@ export function createThreeScene(canvas) {
     }
         }
 
-        // Force LERP capture when ball travel ends
-        if (gameState.ballLaunched && gameState.elapsedTime > gameState.travelTime && !gameState.batHitTriggered && characters.batsman?.model?.userData?.lerpActive) {
+        // Safety: Ensure LERP completes if ball travel ends
+        if (gameState.ballLaunched && gameState.elapsedTime > gameState.travelTime && !gameState.batHitTriggered && characters.batsman?.model?.userData?.wasMoving) {
+            // Force t to 1 to complete movement
+            characters.batsman.model.userData.lerpT = 1;
+
+            // Manually call the LERP end since movement loop won't trigger
             if (window.lerpDetector) {
                 window.lerpDetector.endBatsmanLerp(
                     window.currentBall,
                     characters.batsman.model.position.x
                 );
-                characters.batsman.model.userData.lerpActive = false;
-                characters.batsman.model.userData.lerpCompleted = true;
             }
+
+            characters.batsman.model.userData.wasMoving = false;
+            characters.batsman.model.userData.hasCompletedMove = true;
         }
 
         // Bat-ball collision

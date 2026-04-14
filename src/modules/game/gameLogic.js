@@ -67,72 +67,125 @@ export function checkBatBallCollision(ball, bat, previousBallPosition) {
 export function updateBatsmanPosition(batsman, ballPosition, minX, maxX, speed, delta) {
     if (!batsman) return;
 
-    const targetX = THREE.MathUtils.clamp(
+    // =======================================
+    // STATE INITIALIZATION
+    // =======================================
+    if (batsman.userData.wasMoving === undefined) {
+        batsman.userData.wasMoving = false;
+        batsman.userData.lerpTargetX = null;
+        batsman.userData.lerpStartX = null;
+        batsman.userData.lerpT = 0;
+        batsman.userData.activeBall = null;
+        batsman.userData.hasCompletedMove = false;
+    }
+
+    const currentX = batsman.position.x;
+    const MOVEMENT_THRESHOLD = 0.01;
+    const currentBallNumber = window.currentBall || 0;
+
+    // =======================================
+    // 🔄 NEW BALL DETECTION
+    // Reset movement state when ball changes
+    // =======================================
+    if (batsman.userData.activeBall !== currentBallNumber) {
+        batsman.userData.activeBall = currentBallNumber;
+        batsman.userData.hasCompletedMove = false;
+        batsman.userData.wasMoving = false;
+        batsman.userData.lerpT = 0;
+        batsman.userData.lerpTargetX = null;
+        batsman.userData.lerpStartX = null;
+    }
+
+    // =======================================
+    // DETERMINE IF MOVEMENT IS NEEDED
+    // =======================================
+    const calculatedTargetX = THREE.MathUtils.clamp(
         ballPosition.x,
         minX,
         maxX
     );
 
-    const currentX = batsman.position.x;
+    const distanceToCalculatedTarget = Math.abs(calculatedTargetX - currentX);
+    const shouldMove = distanceToCalculatedTarget > MOVEMENT_THRESHOLD;
 
-    // ===============================
-    // 🧠 BATSMAN LERP START TRACKING
-    // ===============================
-    if (!batsman.userData.lerpActive) {
-        batsman.userData.lerpActive = true;
+    // =======================================
+    // STATE TRANSITION: IDLE → MOVING
+    // FREEZE positions A and B, initialize t=0
+    // =======================================
+    if (shouldMove && !batsman.userData.wasMoving && !batsman.userData.hasCompletedMove) {
+        batsman.userData.lerpStartX = currentX;      // A: start position
+        batsman.userData.lerpTargetX = calculatedTargetX; // B: target position
+        batsman.userData.lerpT = 0;                  // t starts at 0
+        batsman.userData.wasMoving = true;
 
-        batsman.userData.lerpStartX = currentX;
-        batsman.userData.lerpStartTime = performance.now();
-console.log("🟢 LERP START");
-    console.log("Start X:", currentX);
-    console.log("Target X:", targetX);
+        console.log("🟢 LERP START - Ball", currentBallNumber);
+        console.log("A (Start X):", batsman.userData.lerpStartX);
+        console.log("B (Target X):", batsman.userData.lerpTargetX);
+        console.log("t: 0 → movement begins");
 
         if (window.lerpDetector) {
             window.lerpDetector.startBatsmanLerp(
-                currentX,
-                targetX,
-                window.currentBall || 0
+                batsman.userData.lerpStartX,
+                batsman.userData.lerpTargetX,
+                currentBallNumber
             );
         }
     }
 
-    // ===============================
-    // 🎮 MOVEMENT (LERP)
-    // ===============================
-    batsman.position.x +=
-        (targetX - batsman.position.x) *
-        Math.min(1, speed * delta);
+    // =======================================
+    // 🎮 TRUE LERP MOVEMENT
+    // position = (1 - t) * A + t * B
+    // =======================================
+    if (batsman.userData.wasMoving && batsman.userData.lerpTargetX !== null) {
+        const A = batsman.userData.lerpStartX;
+        const B = batsman.userData.lerpTargetX;
+        const maxDuration = Math.abs(B - A) / 4; // Approximate duration based on distance
 
-    // ===============================
-    // 🧠 BATSMAN LERP END TRACKING
-    // ===============================
-    const reachedTarget = Math.abs(targetX - batsman.position.x) < 0.01;
+        // Increment t over time
+        batsman.userData.lerpT += delta / maxDuration;
+        batsman.userData.lerpT = Math.min(batsman.userData.lerpT, 1); // Clamp to [0, 1]
 
-    if (reachedTarget && batsman.userData.lerpActive) {
-        batsman.userData.lerpActive = false;
+        // TRUE LERP FORMULA
+        batsman.position.x = (1 - batsman.userData.lerpT) * A + batsman.userData.lerpT * B;
 
-        const endTime = performance.now();
-        const duration = endTime - batsman.userData.lerpStartTime;
+        console.log(`t: ${batsman.userData.lerpT.toFixed(3)}, X: ${batsman.position.x.toFixed(3)}`);
+    }
 
-        const distance = Math.abs(targetX - batsman.userData.lerpStartX);
+    // =======================================
+    // STATE TRANSITION: MOVING → IDLE
+    // When t >= 1, movement is complete
+    // =======================================
+    if (batsman.userData.wasMoving && batsman.userData.lerpT >= 1) {
+        batsman.userData.wasMoving = false;
+        batsman.userData.hasCompletedMove = true;
+
+        const endX = batsman.position.x;
+        const startX = batsman.userData.lerpStartX;
+        const lerpMidpoint = (1 - 0.5) * startX + 0.5 * endX; // t=0.5
+
+        console.log("🔴 LERP END - Ball", currentBallNumber);
+        console.log("Final X:", endX);
+        console.log("Distance traveled:", Math.abs(endX - startX));
+        console.log("t=0.5 value (midpoint):", lerpMidpoint.toFixed(3));
 
         if (window.lerpDetector) {
             window.lerpDetector.endBatsmanLerp(
-                window.currentBall || 0,
-                batsman.position.x
+                currentBallNumber,
+                endX
             );
         }
 
-        // reset
+        // Reset tracking data
         batsman.userData.lerpStartX = null;
-        batsman.userData.lerpStartTime = null;
+        batsman.userData.lerpTargetX = null;
+        batsman.userData.lerpT = 0;
     }
 
-    // ===============================
-    // ⚡ SNAP LOGIC (your original behavior)
-    // ===============================
+    // =======================================
+    // ⚡ SNAP LOGIC (original behavior)
+    // =======================================
     if (ballPosition.z < -5.3) {
-        batsman.position.x = targetX;
+        batsman.position.x = calculatedTargetX;
     }
 }
 

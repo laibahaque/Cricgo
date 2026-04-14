@@ -55,6 +55,8 @@ function hookGameEvents() {
         const data = window.dataManager.getData();
         data.finalScore = details.finalScore;
         data.ballsPlayed = details.ballsPlayed;
+        data.lerpResults = details.lerpResults;
+        data.lerpSummary = details.lerpSummary;
 
         new FinalPopup(data, () => {
             // Reset for new game
