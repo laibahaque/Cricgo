@@ -263,9 +263,9 @@ export function createThreeScene(canvas) {
         // Motor movement detection
         if (window.motorDetector && characters.batsman?.model) {
             // 🔥 CAPTURE FINAL POSITION FOR MISSED BALL (if applicable)
-            // Use currentBallAttempt since that's what we track clicks with
-            if (gameState.currentBallAttempt > 0) {
-                const prevBallData = window.motorDetector.ballMotorData[gameState.currentBallAttempt];
+            // Use currentBallAttempt - 1 since we need the PREVIOUS ball's data
+            if (gameState.currentBallAttempt > 1) {
+                const prevBallData = window.motorDetector.ballMotorData[gameState.currentBallAttempt - 1];
                 if (prevBallData && !prevBallData.endPosition && characters.batsman?.model) {
                     const currentTimestamp = performance.now();  // 🔥 Use performance.now() for consistency
                     prevBallData.endPosition = {
@@ -275,7 +275,7 @@ export function createThreeScene(canvas) {
                         prevBallData.endPosition.x - prevBallData.startPosition.x
                     );
                     // 🔥 FOR MISSED BALL: Calculate MT from click to end of attempt (next ball start)
-                    const ballTiming = window.motorDetector.ballTimings[gameState.currentBallAttempt];
+                    const ballTiming = window.motorDetector.ballTimings[gameState.currentBallAttempt - 1];
                     if (ballTiming && ballTiming.clickTime && !ballTiming.hitTime) {
                         const movementTime = Math.round(currentTimestamp - ballTiming.clickTime);
                         prevBallData.movementTime = movementTime;
