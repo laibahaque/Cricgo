@@ -162,3 +162,9 @@ Through this project, I was able to understand:
 
 This project is an attempt to combine **3D game development** with **basic human interaction analysis**.
 Although not fully optimized, it demonstrates the core concepts and fulfills the main objectives of the assignment.
+
+## 📖 References 
+* Sketchfab – 3D character models
+* Mixamo – Animated rigged characters
+* OpenAI ChatGPT – Coding assistance and debugging help
+
