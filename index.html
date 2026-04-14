@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>CricGo</title>
+  <link rel="stylesheet" href="./ui/styles/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+</head>
+
+<body>
+  <canvas id="app" style="display:block; position:absolute; top:0; left:0; z-index:0;"></canvas>
+  <!-- name-popup -->
+  <div id="name-popup" class="menu-popup">
+    <div class="menu-popup-content name-box">
+      <div class="logo-wrapper">
+        <img src="/assets/logo.png" alt="CricGo Logo" class="logo-img">
+      </div>
+
+      <h2>Welcome to CricGo</h2>
+      <input id="playerNameInput" type="text" placeholder="Enter Your Name" maxlength="15" />
+      <button id="nameNextBtn" class="primary-btn">
+        Next
+      </button>
+      <p id="name-warning"></p>
+    </div>
+  </div>
+  <div id="gameUI">
+    <span class="score-text">Score: <span id="score">0</span></span>
+  </div>
+  <div id="play-tip" class="play-tip hidden">CLICK ANYWHERE TO THROW</div>
+  <!-- OUT Popup -->
+  <div id="outPopup" class="popup hidden">
+    <div class="popup-content out-box">
+      <h2 class="out-title">YOU ARE OUT!</h2>
+      <p class="out-sub">Better luck next time</p>
+      <button id="out-replay-btn" class="out-btn">Play Again</button>
+    </div>
+  </div>
+  <!-- FOUR Popup -->
+  <div id="fourPopup" class="popup hidden">
+    <div class="four-content">
+      <h1 class="four-text">FOUR!</h1>
+    </div>
+  </div>
+
+  <!-- SIX Popup -->
+  <div id="sixPopup" class="popup hidden">
+    <div class="six-content">
+      <h1 class="six-text">SIXER!</h1>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
