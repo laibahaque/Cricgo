@@ -102,6 +102,14 @@ At the end of the game, a **final summary popup** displays overall performance s
 
 ## 🎁 Special Features
 
+### 🎯 Ticker System (Live Feedback)
+* The game includes a ticker system that shows real-time messages during gameplay.
+* It provides instant feedback such as:
+* Ball movement
+* Batsman hit
+* Score updates (4, 6 runs)
+* This improves user experience by giving continuous interaction feedback.
+
 ### 🎲 Mystery Box
 
 * A random reward system appears during gameplay to enhance user interaction.
