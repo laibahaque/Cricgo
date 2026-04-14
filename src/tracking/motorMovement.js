@@ -3,7 +3,6 @@ import DataManager from '../data/dataManager.js';
 class MotorMovementDetector {
     constructor(ticker) {
         this.ticker = ticker;
-        this.dataManager = new DataManager();
 
         // 🔥 PER-BALL MOTOR DATA - Each ball gets completely isolated data
         this.ballMotorData = {};  // Map: ballNumber -> ballMotorData (ISOLATED per ball)
@@ -15,8 +14,6 @@ class MotorMovementDetector {
         // Legacy compatibility (NOT used for timing)
         this.events = [];
         this.startPosition = null;
-        this.totalClicks = 0;
-        this.successfulHits = 0;
     }
 
     // 🔷 INITIALIZE PER-BALL MOTOR DATA
@@ -113,14 +110,11 @@ class MotorMovementDetector {
         // 🔥 FITTS LAW: ID = log2(D / W + 1)
         const ID = Math.log2((distance / W) + 1);
 
-        this.totalClicks++;
-
         let isHit = false;
         let throughput = 0;
 
         // 🔥 WHEN BATSMAN HITS: Use existing MT (already calculated from movement start)
         if (type === 'batsman_hit') {
-            this.successfulHits++;
             isHit = true;
             
             // 🔥 LOG HIT TIME (for reference only, NOT for MT calculation)
@@ -302,8 +296,6 @@ class MotorMovementDetector {
         this.currentBallData = null;
         this.events = [];
         this.startPosition = null;
-        this.totalClicks = 0;
-        this.successfulHits = 0;
     }
 }
 

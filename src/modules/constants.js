@@ -115,17 +115,3 @@ export const SCORE_CONFIG = {
     FOUR_VALUE: 4,
     ONE_VALUE: 1
 };
-
-export const PROBABILITY_CONFIG = {
-    LOW_SPEED: {
-        threshold: 95,
-        sixProbability: 0.9
-    },
-    MEDIUM_SPEED: {
-        threshold: 125,
-        sixProbability: 0.7
-    },
-    HIGH_SPEED: {
-        sixProbability: 0.45
-    }
-};

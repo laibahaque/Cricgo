@@ -41,31 +41,6 @@ export function createBat(scene) {
     };
 }
 
-export function updateBatSwing(bat, delta) {
-    if (!bat.group || !bat.group.swinging) return;
-    
-    if (!bat.group.swingTime) {
-        bat.group.swingTime = 0;
-        bat.group.swingStart = bat.group.rotation.z;
-        bat.group.swingEnd = bat.group.swingStart - 0.9;
-    }
-    
-    bat.group.swingTime += delta;
-    const t = Math.min(bat.group.swingTime / BAT_CONFIG.SWING_DURATION, 1);
-    
-    bat.group.rotation.z = THREE.MathUtils.lerp(
-        bat.group.swingStart,
-        bat.group.swingEnd,
-        t
-    );
-    
-    if (t >= 1) {
-        bat.group.rotation.z = bat.group.swingStart;
-        bat.group.swinging = false;
-        bat.group.swingTime = 0;
-    }
-}
-
 export function startBatSwing(bat) {
     if (!bat.group.swinging) {
         bat.group.swinging = true;
@@ -93,10 +68,4 @@ export function attachBatToHand(batGroup, batsman) {
     }
     
     return false;
-}
-
-export function getBatCollisionBox(bat) {
-    if (!bat.blade) return null;
-    bat.blade.updateWorldMatrix(true, false);
-    return new THREE.Box3().setFromObject(bat.blade);
 }

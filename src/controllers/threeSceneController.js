@@ -3,9 +3,9 @@ import * as THREE from "three";
 import { createSceneEnvironment, setupCameraResize } from "../modules/game/sceneSetup.js";
 import { createGround } from "../objects/Ground.js";
 import { createPitch } from "../objects/Pitch.js";
-import { createWickets, createBails, resetBails } from "../modules/game/wickets.js";
+import { createWickets, createBails, resetBails } from "../objects/wickets.js";
 import { createBall, updateBallPhysics, resetBallPosition, checkBoundaryCollision } from "../objects/Ball.js";
-import { createBat, updateBatSwing, startBatSwing, attachBatToHand } from "../objects/Bat.js";
+import { createBat, startBatSwing, attachBatToHand } from "../objects/Bat.js";
 import {
     loadBatsman, loadBowler, loadStadium
 } from "../objects/Character.js";
@@ -32,7 +32,6 @@ let gameState = {
     elapsedTime: 0,
     t: 0,
     releaseTime: 0,
-    bowlStartTime: 0,
     ballsPlayed: 0,
     gameEnded: false,
     isPaused: false,
@@ -98,7 +97,7 @@ export function createThreeScene(canvas) {
         loadBatsman(scene),
         loadBowler(scene),
         loadStadium(scene)
-    ]).then(([batsmanData, bowlerData, stadiumData]) => {
+    ]).then(([batsmanData, bowlerData]) => {
         characters.batsman = batsmanData;
         characters.bowler = bowlerData;
 
@@ -109,8 +108,6 @@ export function createThreeScene(canvas) {
     // INPUT HANDLING
     const { handleKeyDown, handleKeyUp } = setupKeyboardControls(
         movement,
-        null,
-        null,
         (movementType) => {
             if (window.motorDetector && characters.batsman?.model) {
                 window.motorDetector.detectMovement(
@@ -214,8 +211,6 @@ export function createThreeScene(canvas) {
         gameState.currentBallAttempt += 1;
         const ballNumber = gameState.currentBallAttempt;  // 🔥 Use attempt counter, not ballsPlayed
         
-        console.log(`\n🔴 CLICK EVENT - Ball Attempt #${ballNumber}`);
-        
         // 🔥 NOTIFY MOTOR DETECTOR WITH EXACT CLICK TIME
         if (window.motorDetector && characters.batsman?.model) {
             window.motorDetector.initializeBallMotorData(ballNumber);
@@ -225,11 +220,6 @@ export function createThreeScene(canvas) {
                 clickTime: gameState.clickTime  // 🔥 Pass the EXACT clickTime captured above
             });
         }
-        
-        // ✅ DEBUG
-        console.log("🟢 CLICK TIME:", gameState.clickTime);
-        console.log("🟡 CURRENT BALL ATTEMPT:", gameState.currentBallAttempt);
-        console.log("🟡 REACTION TIME:", gameState.currentReactionTime);
         resetBails(bails);
         resetBallPosition(ball, trajectory.ballStart);
         gameState.t = 0;
@@ -262,7 +252,6 @@ export function createThreeScene(canvas) {
         const RELEASE_PROGRESS = 0.3;
         const animationClipDuration = characters.bowler.throwAction.getClip().duration;
         gameState.releaseTime = (RELEASE_PROGRESS * animationClipDuration) / animationSpeedFactor;
-        gameState.bowlStartTime = 0;
         bowlTimeElapsed = 0;  // Reset bowl timer
 
         characters.bowler.throwAction.reset().play();
@@ -299,7 +288,6 @@ export function createThreeScene(canvas) {
                         prevBallData.throughput = (movementTime > 0 && ID > 0)
                             ? Number((ID / movementTime).toFixed(4))
                             : 0;
-                        console.log(`✅ MISSED BALL (Attempt ${gameState.currentBallAttempt}): MT=${movementTime}ms, TP=${prevBallData.throughput}`);
                     }
                 }
             }
@@ -388,7 +376,6 @@ export function createThreeScene(canvas) {
                 const reachTime = performance.now();
                 gameState.currentReactionTime = reachTime - gameState.clickTime;
                 gameState.reactionCaptured = true;
-                console.log(`✅ REACTION TIME: ${Math.round(gameState.currentReactionTime)} ms`);
             }
             if (characters.batsman?.model && gameState.ballLaunched && !gameState.batHitTriggered) {
                 updateBatsmanPosition(

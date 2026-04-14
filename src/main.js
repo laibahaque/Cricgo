@@ -3,7 +3,6 @@ import { createThreeScene } from "./controllers/threeSceneController.js";
 import Ticker from "./ui/ticker.js";
 import MotorMovementDetector from "./tracking/motorMovement.js";
 import LerpDetector from "./tracking/lerpDetection.js";
-import CalculationPopup from "./ui/calculationPopup.js";
 import FinalPopup from "./ui/finalPopup.js";
 import MysteryBox from "./ui/mysteryBox.js";
 import DataManager from "./data/dataManager.js";
@@ -47,7 +46,6 @@ function hookGameEvents() {
         // 🔥 COLLECT DATA SILENTLY - NO PER-BALL POPUPS
         // All analysis (LERP + Motor) will be shown ONLY in the final summary
         window.dataManager.addBallData(ballData);
-        // ❌ REMOVED: new CalculationPopup(ballData);
     });
 
     // Listen for game end event from controller

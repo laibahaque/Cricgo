@@ -1,6 +1,6 @@
 // Wickets and bails setup
 import * as THREE from "three";
-import { WICKET_CONFIG, BAIL_CONFIG } from "../constants.js";
+import { WICKET_CONFIG, BAIL_CONFIG } from "../modules/constants.js";
 
 export function createWickets(scene) {
     const wicketMeshes = [];

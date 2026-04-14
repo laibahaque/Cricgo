@@ -1,6 +1,5 @@
 // Collision detection and game mechanics
 import * as THREE from "three";
-import { PROBABILITY_CONFIG } from "../constants.js";
 import { updateScore, showSixPopup, showOutPopup, showFourPopup } from "../../ui/ui.js";
 
 export function checkBallWicketCollision(ball, wicketBoxes, wicketMeshes) {
@@ -213,11 +212,7 @@ export function handleBallHit(ball, score, increment = 6) {
     return score;
 }
 
-export function handleWicketHit(clapAction) {
-    if (typeof clapAction !== 'undefined' && clapAction) {
-        clapAction.reset();
-        clapAction.play();
-    }
+export function handleWicketHit() {
     showOutPopup();
 }
 

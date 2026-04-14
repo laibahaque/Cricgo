@@ -12,43 +12,33 @@ export function createMovementState() {
     };
 }
 
-export function setupKeyboardControls(movement, onKeyDown = null, onKeyUp = null, onMotorMovement = null) {
+export function setupKeyboardControls(movement, onMotorMovement = null) {
     function handleKeyDown(e) {
-        let moved = false;
-        
         switch (e.code) {
-            case MOVEMENT_KEYS.FORWARD: movement.forward = true; moved = true; break;
-            case MOVEMENT_KEYS.BACKWARD: movement.backward = true; moved = true; break;
+            case MOVEMENT_KEYS.FORWARD: movement.forward = true; break;
+            case MOVEMENT_KEYS.BACKWARD: movement.backward = true; break;
             case MOVEMENT_KEYS.LEFT: 
-                movement.left = true; 
-                moved = true; 
+                movement.left = true;
                 if (onMotorMovement) onMotorMovement('batsman_left');
                 break;
             case MOVEMENT_KEYS.RIGHT: 
-                movement.right = true; 
-                moved = true; 
+                movement.right = true;
                 if (onMotorMovement) onMotorMovement('batsman_right');
                 break;
-            case MOVEMENT_KEYS.DOWN: movement.down = true; moved = true; break;
-            case MOVEMENT_KEYS.UP: movement.up = true; moved = true; break;
+            case MOVEMENT_KEYS.DOWN: movement.down = true; break;
+            case MOVEMENT_KEYS.UP: movement.up = true; break;
         }
-        
-        if (moved && onKeyDown) onKeyDown(e);
     }
     
     function handleKeyUp(e) {
-        let moved = false;
-        
         switch (e.code) {
-            case MOVEMENT_KEYS.FORWARD: movement.forward = false; moved = true; break;
-            case MOVEMENT_KEYS.BACKWARD: movement.backward = false; moved = true; break;
-            case MOVEMENT_KEYS.LEFT: movement.left = false; moved = true; break;
-            case MOVEMENT_KEYS.RIGHT: movement.right = false; moved = true; break;
-            case MOVEMENT_KEYS.DOWN: movement.down = false; moved = true; break;
-            case MOVEMENT_KEYS.UP: movement.up = false; moved = true; break;
+            case MOVEMENT_KEYS.FORWARD: movement.forward = false; break;
+            case MOVEMENT_KEYS.BACKWARD: movement.backward = false; break;
+            case MOVEMENT_KEYS.LEFT: movement.left = false; break;
+            case MOVEMENT_KEYS.RIGHT: movement.right = false; break;
+            case MOVEMENT_KEYS.DOWN: movement.down = false; break;
+            case MOVEMENT_KEYS.UP: movement.up = false; break;
         }
-        
-        if (moved && onKeyUp) onKeyUp(e);
     }
     
     return { handleKeyDown, handleKeyUp };
