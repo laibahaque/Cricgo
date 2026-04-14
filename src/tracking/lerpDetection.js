@@ -21,6 +21,11 @@ class LerpDetector {
         };
         
         this.startTime = performance.now(); // 🔥 TRACK START TIME
+        
+        // 🎯 TRIGGER TICKER MESSAGE FOR LERP START
+        if (this.ticker && this.ticker.onLerpStart) {
+            this.ticker.onLerpStart(ballNumber);
+        }
     }
 
     endBatsmanLerp(ballNumber, endX) {
@@ -61,6 +66,11 @@ class LerpDetector {
             lerpResult: lerpMidpoint.toFixed(3),
             duration: lerpDuration.toFixed(0)
         });
+        
+        // 🎯 TRIGGER TICKER MESSAGE FOR LERP COMPLETION
+        if (this.ticker && this.ticker.onLerpComplete) {
+            this.ticker.onLerpComplete(ballNumber, data);
+        }
         
         // 🔥 TRIGGER CALLBACK IF PROVIDED
         if (this.onLerpComplete) {

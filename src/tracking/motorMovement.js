@@ -148,6 +148,11 @@ class MotorMovementDetector {
             
             console.log(`✅ FITTS LAW (Ball ${ballNumber}): D=${ballData.distance}, ID=${ballData.indexOfDifficulty}, MT=${ballData.movementTime}ms, TP=${ballData.throughput}`);
             
+            // 🎯 TRIGGER TICKER MESSAGE FOR FITTS LAW ANALYSIS
+            if (this.ticker && this.ticker.onFittsLawAnalysis) {
+                this.ticker.onFittsLawAnalysis(ballNumber, ballData);
+            }
+            
             // Legacy callback
             this.ticker?.onBatsmanHit?.();
         }

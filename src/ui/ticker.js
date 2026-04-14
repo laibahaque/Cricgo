@@ -91,19 +91,25 @@ class Ticker {
         this.showEventMessage("Bowler throws a ball");
     }
 
-    onBallMoving() {
-        this.showEventMessage("Lerp interpolation detected", "red", 4000);
+    onLerpStart(ballNumber) {
+        this.showEventMessage(`📍 Ball ${ballNumber}: Batsman positioning detected`, "#FFD700", 3000);
     }
 
-    onBatsmanHit() {
-        this.showEventMessage("Motor Movement detected", "red");
+    onLerpComplete(ballNumber, data) {
+        const distanceDisplay = Math.abs(data.endX - data.startX).toFixed(2);
+        this.showEventMessage(`✓ Ball ${ballNumber}: Position interpolated (distance: ${distanceDisplay})`, "#00FF00", 2500);
+    }
+
+    onFittsLawAnalysis(ballNumber, data) {
+        const message = `🎯 Ball ${ballNumber}: Fitts Law - D=${data.distance.toFixed(2)} | ID=${data.indexOfDifficulty.toFixed(2)} bits | MT=${data.movementTime}ms | TP=${data.throughput.toFixed(3)} bits/ms`;
+        this.showEventMessage(message, "#FF6B6B", 3500);
     }
 
     onScore(score) {
         if (score === 6) {
-            this.showEventMessage("Batsman hit a 6");
+            this.showEventMessage("🔥 Batsman hit a 6!", "#FFD700");
         } else if (score === 4) {
-            this.showEventMessage("Batsman hit a 4");
+            this.showEventMessage("⭐ Batsman hit a 4!", "#87CEEB");
         }
         // No message for other scores
     }
